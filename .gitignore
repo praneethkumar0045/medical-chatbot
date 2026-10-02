@@ -1,0 +1,117 @@
+# ===================== Secrets & Environment =====================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials.json
+
+# ===================== Python =====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+backend/venv/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checkers / linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pyre/
+.pytype/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# ===================== FastAPI / Uvicorn =====================
+*.log
+logs/
+uvicorn.log
+
+# ===================== Vector store / LangChain caches =====================
+# LangChain cache + any local vector index / model artifacts
+.cache/
+.langchain/
+**/chroma/
+**/faiss_index/
+**/*.faiss
+**/*.pkl
+**/*.pickle
+**/*.index
+backend/chroma_db/
+backend/vectorstore/
+
+# ===================== Knowledge base data (large source files) =====================
+backend/data/
+!backend/data/.gitkeep
+
+# ===================== Node / React Frontend =====================
+node_modules/
+frontend/node_modules/
+.pnpm-store/
+.yarn/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/versions
+.npm/
+
+# Build output
+dist/
+build/
+frontend/dist/
+frontend/build/
+.vite/
+frontend/.vite/
+*.tsbuildinfo
+
+# Testing
+coverage/
+frontend/coverage/
+jest.config.*
+.eslintcache
+
+# ===================== Editors =====================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ===================== OS / misc =====================
+*.pid
+*.seed
+tmp/
+temp/
