@@ -63,6 +63,7 @@ uvicorn.log
 **/*.index
 backend/chroma_db/
 backend/vectorstore/
+backend/.ingestion_state.json
 
 # ===================== Knowledge base data (large source files) =====================
 backend/data/

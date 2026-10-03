@@ -1,0 +1,114 @@
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_pinecone import PineconeVectorStore
+from langchain_core.runnables import RunnablePassthrough
+from dotenv import load_dotenv
+from langchain_core.prompts import ChatPromptTemplate
+
+from langchain_google_genai import ChatGoogleGenerativeAI
+import os
+
+load_dotenv()
+
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-3.5-flash", temperature=0.4, max_output_tokens=500
+)
+
+
+# 1. Extract data from PDF files
+def load_pdf_file(data):
+    loader = DirectoryLoader(data, glob="*.pdf", loader_cls=PyPDFLoader)
+
+    documents = loader.load()
+
+    return documents
+
+
+extracted_data = load_pdf_file(data="data/")
+
+
+# 2. Split data into chunks
+def text_split(extracted_data):
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=20)
+
+    text_chunks = text_splitter.split_documents(extracted_data)
+
+    return text_chunks
+
+
+text_chunks = text_split(extracted_data)
+
+print("Length of Text Chunks:", len(text_chunks))
+
+
+# 3. Create Hugging Face embeddings
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+print("Embedding model loaded successfully")
+
+print("\nRelevant Documents:\n")
+
+# 4. Store embeddings in Pinecone
+vectorstore = PineconeVectorStore.from_documents(
+    documents=text_chunks, embedding=embeddings, index_name="medical-chatbot"
+)
+
+print("Documents stored in Pinecone successfully")
+
+# query = "What are the Treatment Strategies of Acne?"
+
+# results = vectorstore.similarity_search(query, k=3)
+# print(results)
+
+system_prompt = (
+    "You are an assistant for question-answering tasks. "
+    "Use the following pieces of retrieved context to answer "
+    "the question. If you don't know the answer, say that you "
+    "don't know. Use three sentences maximum and keep the "
+    "answer concise."
+    "\n\n"
+    "{context}"
+)
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", system_prompt),
+        ("human", "{input}"),
+    ]
+)
+
+# Load existing Pinecone index
+docsearch = PineconeVectorStore.from_existing_index(
+    index_name="medical-chatbot", embedding=embeddings
+)
+
+
+# Create retriever
+retriever = docsearch.as_retriever(search_kwargs={"k": 3})
+
+
+# Format retrieved documents
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
+# Create RAG chain
+rag_chain = (
+    {"context": retriever | format_docs, "input": RunnablePassthrough()} | prompt | llm
+)
+
+
+# Ask a question
+query = "What are the Treatment Strategies of Acne?"
+query = "What is Mathematics?"
+
+
+response = rag_chain.invoke(query)
+
+print("\nAnswer:")
+print(response.content[0]["text"])
