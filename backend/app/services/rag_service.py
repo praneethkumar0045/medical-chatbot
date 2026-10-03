@@ -1,7 +1,8 @@
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
-from app.services.vector_service import retriever
+from langchain_core.runnables import RunnablePassthrough
+
 from app.services.llm_service import llm
+from app.services.vector_service import retriever
 
 system_prompt = (
     "You are an assistant for question-answering tasks. "
@@ -22,26 +23,36 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 
-# Format retrieved documents
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-# Create RAG chain
 rag_chain = (
-    {"context": retriever | format_docs, "input": RunnablePassthrough()} | prompt | llm
+    {
+        "context": retriever | format_docs,
+        "input": RunnablePassthrough(),
+    }
+    | prompt
+    | llm
 )
 
 
 def ask_question(query: str):
-    response = rag_chain.invoke(query)
 
-    if isinstance(response.content, str):
-        return response.content
+    try:
+        response = rag_chain.invoke(query)
 
-    if isinstance(response.content, list):
-        return "".join(
-            item.get("text", "") for item in response.content if isinstance(item, dict)
-        )
+        if isinstance(response.content, str):
+            return response.content
 
-    return str(response.content)
+        if isinstance(response.content, list):
+            return "".join(
+                item.get("text", "")
+                for item in response.content
+                if isinstance(item, dict)
+            )
+
+        return str(response.content)
+
+    except Exception as e:
+        raise RuntimeError(f"RAG processing failed: {str(e)}") from e

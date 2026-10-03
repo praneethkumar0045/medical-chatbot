@@ -3,8 +3,11 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.routes.chat import router as chat_router
 from app.core.logging import setup_logging
+from app.middleware.request_id import RequestIDMiddleware
+
+from app.api.routes.chat import router as chat_router
+from app.api.routes.health import router as health_router
 
 setup_logging()
 
@@ -15,13 +18,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.add_middleware(RequestIDMiddleware)
 
+app.include_router(health_router)
 app.include_router(chat_router)
-
-
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
 
 
 @app.exception_handler(Exception)
